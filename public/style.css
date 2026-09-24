@@ -1,0 +1,568 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+html {
+    scroll-behavior: smooth;
+}
+
+
+body {
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: #070707;
+
+    color: white;
+
+    line-height: 1.6;
+
+}
+
+
+/* =================================
+   HEADER
+================================= */
+
+header {
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 75px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 0 8%;
+
+    background:
+        rgba(7, 7, 7, 0.85);
+
+    backdrop-filter: blur(15px);
+
+    border-bottom:
+        1px solid #222;
+
+    z-index: 1000;
+
+}
+
+
+.logo {
+
+    font-size: 23px;
+
+    font-weight: 900;
+
+    letter-spacing: 2px;
+
+}
+
+
+.logo span,
+footer span {
+
+    color: #d4af37;
+
+}
+
+
+nav {
+
+    display: flex;
+
+    gap: 30px;
+
+}
+
+
+nav a {
+
+    color: #ccc;
+
+    text-decoration: none;
+
+    font-weight: bold;
+
+    transition: .3s;
+
+}
+
+
+nav a:hover {
+
+    color: #d4af37;
+
+}
+
+
+/* =================================
+   HERO
+================================= */
+
+.hero {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    padding: 120px 20px;
+
+    background:
+
+        radial-gradient(
+            circle at center,
+            #292929 0%,
+            #111 35%,
+            #050505 75%
+        );
+
+}
+
+
+.hero-content {
+
+    max-width: 900px;
+
+}
+
+
+.small-title {
+
+    color: #d4af37;
+
+    letter-spacing: 6px;
+
+    font-weight: bold;
+
+    margin-bottom: 20px;
+
+}
+
+
+.hero h1 {
+
+    font-size:
+        clamp(60px, 12vw, 130px);
+
+    line-height: .9;
+
+    font-weight: 1000;
+
+    letter-spacing: -6px;
+
+}
+
+
+.hero h1 span {
+
+    color: #d4af37;
+
+}
+
+
+.description {
+
+    max-width: 600px;
+
+    margin: 35px auto;
+
+    color: #999;
+
+    font-size: 18px;
+
+}
+
+
+/* =================================
+   BUTTON
+================================= */
+
+.main-button {
+
+    display: inline-block;
+
+    padding: 16px 30px;
+
+    background: #d4af37;
+
+    color: #050505;
+
+    border: none;
+
+    border-radius: 8px;
+
+    text-decoration: none;
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition: .3s;
+
+}
+
+
+.main-button:hover {
+
+    transform:
+        translateY(-4px);
+
+    box-shadow:
+        0 15px 40px
+        rgba(212,175,55,.25);
+
+}
+
+
+/* =================================
+   SECTIONS
+================================= */
+
+section {
+
+    padding: 110px 8%;
+
+}
+
+
+.section-title {
+
+    text-align: center;
+
+    margin-bottom: 60px;
+
+}
+
+
+.section-title p {
+
+    color: #d4af37;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    letter-spacing: 4px;
+
+}
+
+
+.section-title h2 {
+
+    font-size: 45px;
+
+    margin-top: 10px;
+
+}
+
+
+/* =================================
+   CARDS
+================================= */
+
+#services {
+
+    background: #0d0d0d;
+
+}
+
+
+.cards {
+
+    max-width: 1100px;
+
+    margin: auto;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(230px, 1fr)
+        );
+
+    gap: 20px;
+
+}
+
+
+.card {
+
+    background: #151515;
+
+    padding: 35px;
+
+    border:
+        1px solid #292929;
+
+    border-radius: 16px;
+
+    transition: .3s;
+
+}
+
+
+.card:hover {
+
+    transform:
+        translateY(-8px);
+
+    border-color:
+        #d4af37;
+
+}
+
+
+.icon {
+
+    font-size: 35px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.card h3 {
+
+    font-size: 22px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.card p {
+
+    color: #888;
+
+    margin-bottom: 20px;
+
+}
+
+
+.card strong {
+
+    color: #d4af37;
+
+    font-size: 21px;
+
+}
+
+
+/* =================================
+   BOOKING
+================================= */
+
+.booking-section {
+
+    background: #080808;
+
+}
+
+
+.booking-box {
+
+    max-width: 650px;
+
+    margin: auto;
+
+    background: #111;
+
+    padding: 40px;
+
+    border:
+        1px solid #292929;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 25px 80px
+        rgba(0,0,0,.5);
+
+}
+
+
+.booking-box label {
+
+    display: block;
+
+    color: #bbb;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    margin-top: 18px;
+
+    margin-bottom: 7px;
+
+}
+
+
+.booking-box input,
+.booking-box select,
+.booking-box textarea {
+
+    width: 100%;
+
+    padding: 15px;
+
+    background: #080808;
+
+    border:
+        1px solid #333;
+
+    border-radius: 8px;
+
+    color: white;
+
+    outline: none;
+
+    font-size: 15px;
+
+}
+
+
+.booking-box textarea {
+
+    min-height: 100px;
+
+    resize: vertical;
+
+}
+
+
+.booking-box input:focus,
+.booking-box select:focus,
+.booking-box textarea:focus {
+
+    border-color: #d4af37;
+
+}
+
+
+.booking-box .main-button {
+
+    width: 100%;
+
+    margin-top: 25px;
+
+}
+
+
+#message {
+
+    text-align: center;
+
+    margin-top: 20px;
+
+    font-weight: bold;
+
+}
+
+
+/* =================================
+   FOOTER
+================================= */
+
+footer {
+
+    text-align: center;
+
+    padding: 50px 20px;
+
+    background: #040404;
+
+    border-top:
+        1px solid #222;
+
+}
+
+
+footer h2 {
+
+    margin-bottom: 10px;
+
+}
+
+
+footer p {
+
+    color: #666;
+
+    margin-top: 5px;
+
+}
+
+
+/* =================================
+   MOBILE
+================================= */
+
+@media(max-width: 700px) {
+
+    header {
+
+        padding: 0 20px;
+
+    }
+
+
+    nav {
+
+        display: none;
+
+    }
+
+
+    section {
+
+        padding:
+            80px 20px;
+
+    }
+
+
+    .hero h1 {
+
+        letter-spacing: -3px;
+
+    }
+
+
+    .section-title h2 {
+
+        font-size: 35px;
+
+    }
+
+
+    .booking-box {
+
+        padding: 25px;
+
+    }
+
+}

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>CSIMPI CUTZ | Barber Shop</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        CSIMPI <span>CUTZ</span>
+    </div>
+
+    <nav>
+
+        <a href="#home">
+            Főoldal
+        </a>
+
+        <a href="#services">
+            Szolgáltatások
+        </a>
+
+        <a href="#booking">
+            Időpont
+        </a>
+
+    </nav>
+
+</header>
+
+
+<section class="hero" id="home">
+
+    <div class="hero-content">
+
+        <p class="small-title">
+            PREMIUM BARBER SHOP
+        </p>
+
+        <h1>
+            CSIMPI<br>
+            <span>CUTZ</span>
+        </h1>
+
+        <p class="description">
+            Precíz hajvágás.
+            Éles vonalak.
+            Prémium megjelenés.
+        </p>
+
+        <a
+            href="#booking"
+            class="main-button"
+        >
+            IDŐPONTFOGLALÁS
+        </a>
+
+    </div>
+
+</section>
+
+
+<section id="services">
+
+    <div class="section-title">
+
+        <p>
+            SZOLGÁLTATÁSOK
+        </p>
+
+        <h2>
+            Válassz egy stílust
+        </h2>
+
+    </div>
+
+
+    <div class="cards">
+
+        <div class="card">
+
+            <div class="icon">
+                ✂️
+            </div>
+
+            <h3>
+                Classic Cut
+            </h3>
+
+            <p>
+                Klasszikus férfi hajvágás
+                precíz átmenettel.
+            </p>
+
+            <strong>
+                5 000 Ft
+            </strong>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                🔥
+            </div>
+
+            <h3>
+                Skin Fade
+            </h3>
+
+            <p>
+                Tiszta skin fade
+                és pengeéles kontúr.
+            </p>
+
+            <strong>
+                6 000 Ft
+            </strong>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                🧔
+            </div>
+
+            <h3>
+                Hair + Beard
+            </h3>
+
+            <p>
+                Hajvágás és
+                szakálligazítás.
+            </p>
+
+            <strong>
+                8 000 Ft
+            </strong>
+
+        </div>
+
+
+        <div class="card">
+
+            <div class="icon">
+                💎
+            </div>
+
+            <h3>
+                Premium Cut
+            </h3>
+
+            <p>
+                Haj, szakáll és
+                prémium styling.
+            </p>
+
+            <strong>
+                10 000 Ft
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="booking-section" id="booking">
+
+    <div class="section-title">
+
+        <p>
+            ONLINE FOGLALÁS
+        </p>
+
+        <h2>
+            Foglalj időpontot
+        </h2>
+
+    </div>
+
+
+    <div class="booking-box">
+
+        <form id="bookingForm">
+
+
+            <label>
+                Név *
+            </label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Teljes neved"
+                required
+            >
+
+
+            <label>
+                Telefonszám *
+            </label>
+
+            <input
+                type="tel"
+                id="phone"
+                placeholder="+36 30 123 4567"
+                required
+            >
+
+
+            <label>
+                E-mail *
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="pelda@email.com"
+                required
+            >
+
+
+            <label>
+                Szolgáltatás *
+            </label>
+
+            <select
+                id="service"
+                required
+            >
+
+                <option value="">
+                    Válassz szolgáltatást
+                </option>
+
+                <option value="Classic Cut">
+                    Classic Cut - 5 000 Ft
+                </option>
+
+                <option value="Skin Fade">
+                    Skin Fade - 6 000 Ft
+                </option>
+
+                <option value="Hair + Beard">
+                    Hair + Beard - 8 000 Ft
+                </option>
+
+                <option value="Premium Cut">
+                    Premium Cut - 10 000 Ft
+                </option>
+
+            </select>
+
+
+            <label>
+                Dátum *
+            </label>
+
+            <input
+                type="date"
+                id="date"
+                required
+            >
+
+
+            <label>
+                Időpont *
+            </label>
+
+            <select
+                id="time"
+                required
+            >
+
+                <option value="">
+                    Először válassz dátumot
+                </option>
+
+            </select>
+
+
+            <label>
+                Megjegyzés
+            </label>
+
+            <textarea
+                id="note"
+                placeholder="Pl. skin fade-et szeretnék..."
+            ></textarea>
+
+
+            <button
+                type="submit"
+                class="main-button"
+            >
+                FOGLALÁS VÉGLEGESÍTÉSE
+            </button>
+
+
+            <div id="message"></div>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+<footer>
+
+    <h2>
+        CSIMPI <span>CUTZ</span>
+    </h2>
+
+    <p>
+        Premium Barber Shop
+    </p>
+
+    <p>
+        © 2026 CSIMPI CUTZ
+    </p>
+
+</footer>
+
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
