@@ -1,0 +1,27 @@
+{
+  "monday": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "19:00"
+  },
+  "tuesday": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "19:00"
+  },
+  "wednesday": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "19:00"
+  },
+  "thursday": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "19:00"
+  },
+  "friday": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "19:00"
+  }
+}

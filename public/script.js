@@ -11,29 +11,101 @@ const message =
     document.getElementById("message");
 
 
-/*
-========================================
-MAI DÁTUM
-========================================
-*/
+// =====================================================
+// MAI DÁTUM
+// =====================================================
 
 const today =
-    new Date().toISOString().split("T")[0];
+    new Date()
+        .toISOString()
+        .split("T")[0];
 
 dateInput.min = today;
 
 
-/*
-========================================
-DÁTUM KIVÁLASZTÁSA
-========================================
-*/
+// =====================================================
+// MUNKAREND
+// =====================================================
+
+let schedule = {};
+
+
+// =====================================================
+// MUNKAREND BETÖLTÉSE
+// =====================================================
+
+async function loadSchedule() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/schedule"
+            );
+
+        const data =
+            await response.json();
+
+        if (data.success) {
+
+            schedule =
+                data.schedule || {};
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Munkarend hiba:",
+            error
+        );
+
+    }
+}
+
+
+// =====================================================
+// DÁTUM NAPJÁNAK MEGHATÁROZÁSA
+// =====================================================
+
+function getDayName(dateString) {
+
+    const date =
+        new Date(
+            `${dateString}T12:00:00`
+        );
+
+    const days = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday"
+    ];
+
+    return days[
+        date.getDay()
+    ];
+}
+
+
+// =====================================================
+// DÁTUM KIVÁLASZTÁSA
+// =====================================================
 
 dateInput.addEventListener(
     "change",
     loadAvailableTimes
 );
 
+
+// =====================================================
+// IDŐPONTOK
+// =====================================================
 
 async function loadAvailableTimes() {
 
@@ -54,8 +126,56 @@ async function loadAvailableTimes() {
     }
 
 
+    const dayName =
+        getDayName(date);
+
+
+    // ==============================================
+    // HÉTVÉGE
+    // ==============================================
+
+    if (
+        dayName === "saturday" ||
+        dayName === "sunday"
+    ) {
+
+        timeSelect.innerHTML = `
+            <option value="">
+                Hétvégén nincs nyitvatartás
+            </option>
+        `;
+
+        return;
+
+    }
+
+
+    // ==============================================
+    // NAP ELLENŐRZÉSE
+    // ==============================================
+
+    const selectedDay =
+        schedule[dayName];
+
+
+    if (
+        !selectedDay ||
+        !selectedDay.enabled
+    ) {
+
+        timeSelect.innerHTML = `
+            <option value="">
+                Ezen a napon nincs nyitvatartás
+            </option>
+        `;
+
+        return;
+
+    }
+
+
     timeSelect.innerHTML = `
-        <option>
+        <option value="">
             Időpontok betöltése...
         </option>
     `;
@@ -65,7 +185,7 @@ async function loadAvailableTimes() {
 
         const response =
             await fetch(
-                `/api/booked?date=${date}`
+                `/api/booked?date=${encodeURIComponent(date)}`
             );
 
 
@@ -73,41 +193,24 @@ async function loadAvailableTimes() {
             await response.json();
 
 
-        const allTimes = [
+        if (!response.ok) {
 
-            "09:00",
-            "09:30",
-            "10:00",
-            "10:30",
-            "11:00",
-            "11:30",
-            "12:00",
-            "12:30",
-            "13:00",
-            "13:30",
-            "14:00",
-            "14:30",
-            "15:00",
-            "15:30",
-            "16:00",
-            "16:30",
-            "17:00",
-            "17:30",
-            "18:00",
-            "18:30",
-            "19:00"
+            timeSelect.innerHTML = `
+                <option value="">
+                    Nem sikerült betölteni az időpontokat
+                </option>
+            `;
 
-        ];
+            return;
+
+        }
 
 
         timeSelect.innerHTML = "";
 
 
         const available =
-            allTimes.filter(
-                time =>
-                    !data.bookedTimes.includes(time)
-            );
+            data.availableTimes || [];
 
 
         if (available.length === 0) {
@@ -124,7 +227,9 @@ async function loadAvailableTimes() {
 
 
         const defaultOption =
-            document.createElement("option");
+            document.createElement(
+                "option"
+            );
 
         defaultOption.value = "";
 
@@ -136,23 +241,30 @@ async function loadAvailableTimes() {
         );
 
 
-        available.forEach(time => {
+        available.forEach(
+            time => {
 
-            const option =
-                document.createElement("option");
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-            option.value = time;
+                option.value =
+                    time;
 
-            option.textContent = time;
+                option.textContent =
+                    time;
 
-            timeSelect.appendChild(
-                option
-            );
+                timeSelect.appendChild(
+                    option
+                );
 
-        });
+            }
+        );
 
+    }
 
-    } catch (error) {
+    catch (error) {
 
         console.error(error);
 
@@ -167,11 +279,9 @@ async function loadAvailableTimes() {
 }
 
 
-/*
-========================================
-FOGLALÁS
-========================================
-*/
+// =====================================================
+// FOGLALÁS
+// =====================================================
 
 form.addEventListener(
     "submit",
@@ -179,6 +289,9 @@ form.addEventListener(
 
         event.preventDefault();
 
+
+        message.style.color =
+            "#aaa";
 
         message.textContent =
             "Foglalás feldolgozása...";
@@ -258,6 +371,16 @@ form.addEventListener(
                     result.error ||
                     "Hiba történt.";
 
+                // Ha közben más lefoglalta,
+                // frissítsük az időpontokat
+                if (
+                    response.status === 409
+                ) {
+
+                    await loadAvailableTimes();
+
+                }
+
                 return;
 
             }
@@ -270,7 +393,7 @@ form.addEventListener(
             message.innerHTML = `
                 ✅ <strong>Sikeres foglalás!</strong><br>
                 ${data.date} — ${data.time}<br>
-                Hamarosan visszaigazolást kapsz.
+                Hamarosan visszaigazolást kapsz e-mailben.
             `;
 
 
@@ -279,12 +402,14 @@ form.addEventListener(
 
             timeSelect.innerHTML = `
                 <option value="">
-                    Válassz időpontot
+                    Válassz dátumot
                 </option>
             `;
 
 
-        } catch (error) {
+        }
+
+        catch (error) {
 
             console.error(error);
 
@@ -298,3 +423,10 @@ form.addEventListener(
 
     }
 );
+
+
+// =====================================================
+// INDÍTÁS
+// =====================================================
+
+loadSchedule();

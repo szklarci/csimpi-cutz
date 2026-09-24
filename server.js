@@ -11,35 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const DATA_FILE = path.join(__dirname, "bookings.json");
-
-
-// =====================================================
-// IDŐPONTOK
-// =====================================================
-
-const TIME_SLOTS = [
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-    "18:00",
-    "18:30",
-    "19:00"
-];
+const SETTINGS_FILE = path.join(__dirname, "schedule.json");
 
 
 // =====================================================
@@ -55,7 +27,59 @@ const SERVICES = [
 
 
 // =====================================================
-// EXPRESS BEÁLLÍTÁSOK
+// ALAPÉRTELMEZETT MUNKANAPOK
+// =====================================================
+
+const DEFAULT_SCHEDULE = {
+    monday: {
+        enabled: true,
+        start: "09:00",
+        end: "19:00"
+    },
+
+    tuesday: {
+        enabled: true,
+        start: "09:00",
+        end: "19:00"
+    },
+
+    wednesday: {
+        enabled: true,
+        start: "09:00",
+        end: "19:00"
+    },
+
+    thursday: {
+        enabled: true,
+        start: "09:00",
+        end: "19:00"
+    },
+
+    friday: {
+        enabled: true,
+        start: "09:00",
+        end: "19:00"
+    }
+};
+
+
+// =====================================================
+// NAPOK
+// =====================================================
+
+const DAY_NAMES = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday"
+];
+
+
+// =====================================================
+// EXPRESS
 // =====================================================
 
 app.use(
@@ -72,7 +96,7 @@ app.use(
 
 
 // =====================================================
-// FOGLALÁSOK BEOLVASÁSA
+// FOGLALÁSOK BETÖLTÉSE
 // =====================================================
 
 function getBookings() {
@@ -112,7 +136,6 @@ function getBookings() {
         );
 
         return [];
-
     }
 }
 
@@ -132,7 +155,72 @@ function saveBookings(bookings) {
         ),
         "utf8"
     );
+}
 
+
+// =====================================================
+// MUNKAREND BETÖLTÉSE
+// =====================================================
+
+function getSchedule() {
+
+    if (!fs.existsSync(SETTINGS_FILE)) {
+
+        fs.writeFileSync(
+            SETTINGS_FILE,
+            JSON.stringify(
+                DEFAULT_SCHEDULE,
+                null,
+                2
+            ),
+            "utf8"
+        );
+
+    }
+
+    try {
+
+        const data =
+            fs.readFileSync(
+                SETTINGS_FILE,
+                "utf8"
+            );
+
+        const schedule =
+            JSON.parse(data);
+
+        return {
+            ...DEFAULT_SCHEDULE,
+            ...schedule
+        };
+
+    } catch (error) {
+
+        console.error(
+            "SCHEDULE BETÖLTÉSI HIBA:",
+            error
+        );
+
+        return DEFAULT_SCHEDULE;
+    }
+}
+
+
+// =====================================================
+// MUNKAREND MENTÉSE
+// =====================================================
+
+function saveSchedule(schedule) {
+
+    fs.writeFileSync(
+        SETTINGS_FILE,
+        JSON.stringify(
+            schedule,
+            null,
+            2
+        ),
+        "utf8"
+    );
 }
 
 
@@ -148,12 +236,11 @@ function escapeHtml(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
 
 // =====================================================
-// EMAIL TRANSPORTER
+// EMAIL
 // =====================================================
 
 function createTransporter() {
@@ -163,17 +250,11 @@ function createTransporter() {
         service: "gmail",
 
         auth: {
-
-            user:
-                process.env.EMAIL_USER,
-
-            pass:
-                process.env.EMAIL_PASS
-
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
         }
 
     });
-
 }
 
 
@@ -181,12 +262,11 @@ function createTransporter() {
 // ADMIN SESSIONÖK
 // =====================================================
 
-const adminSessions =
-    new Set();
+const adminSessions = new Set();
 
 
 // =====================================================
-// ADMIN TOKEN KINYERÉSE
+// ADMIN TOKEN
 // =====================================================
 
 function getAdminToken(req) {
@@ -221,12 +301,11 @@ function getAdminToken(req) {
     return adminCookie.substring(
         "admin_token=".length
     );
-
 }
 
 
 // =====================================================
-// ADMIN JOGOSULTSÁG ELLENŐRZÉSE
+// ADMIN ELLENŐRZÉS
 // =====================================================
 
 function requireAdmin(
@@ -255,8 +334,304 @@ function requireAdmin(
     }
 
     next();
-
 }
+
+
+// =====================================================
+// DÁTUM NAPJÁNAK MEGHATÁROZÁSA
+// =====================================================
+
+function getDayName(dateString) {
+
+    const date =
+        new Date(
+            `${dateString}T12:00:00`
+        );
+
+    if (isNaN(date.getTime())) {
+        return null;
+    }
+
+    return DAY_NAMES[
+        date.getDay()
+    ];
+}
+
+
+// =====================================================
+// IDŐPONTOK GENERÁLÁSA
+// =====================================================
+
+function generateTimeSlots(
+    start,
+    end
+) {
+
+    const slots = [];
+
+    const [startHour, startMinute] =
+        start.split(":").map(Number);
+
+    const [endHour, endMinute] =
+        end.split(":").map(Number);
+
+    let current =
+        startHour * 60 +
+        startMinute;
+
+    const finish =
+        endHour * 60 +
+        endMinute;
+
+    while (current < finish) {
+
+        const hour =
+            Math.floor(
+                current / 60
+            );
+
+        const minute =
+            current % 60;
+
+        const formatted =
+            `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+
+        slots.push(formatted);
+
+        current += 30;
+    }
+
+    return slots;
+}
+
+
+// =====================================================
+// IDŐPONTOK EGY ADOTT NAPRA
+// =====================================================
+
+function getAvailableScheduleTimes(date) {
+
+    const dayName =
+        getDayName(date);
+
+    if (!dayName) {
+        return [];
+    }
+
+    const schedule =
+        getSchedule();
+
+    const day =
+        schedule[dayName];
+
+    if (!day || !day.enabled) {
+        return [];
+    }
+
+    return generateTimeSlots(
+        day.start,
+        day.end
+    );
+}
+
+
+// =====================================================
+// MUNKAREND LEKÉRÉSE
+// =====================================================
+
+app.get(
+    "/api/schedule",
+    (req, res) => {
+
+        const schedule =
+            getSchedule();
+
+        res.json({
+
+            success: true,
+
+            schedule
+
+        });
+
+    }
+);
+
+
+// =====================================================
+// ADMIN MUNKAREND LEKÉRÉSE
+// =====================================================
+
+app.get(
+    "/api/admin/schedule",
+    requireAdmin,
+    (req, res) => {
+
+        res.json({
+
+            success: true,
+
+            schedule:
+                getSchedule()
+
+        });
+
+    }
+);
+
+
+// =====================================================
+// ADMIN MUNKAREND MENTÉSE
+// =====================================================
+
+app.post(
+    "/api/admin/schedule",
+    requireAdmin,
+    (req, res) => {
+
+        try {
+
+            const incoming =
+                req.body;
+
+            const days = [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday"
+            ];
+
+            const newSchedule = {};
+
+            for (const dayName of days) {
+
+                const day =
+                    incoming[dayName];
+
+                if (!day) {
+
+                    return res.status(400).json({
+
+                        success: false,
+
+                        error:
+                            `Hiányzó beállítás: ${dayName}`
+
+                    });
+
+                }
+
+                const enabled =
+                    day.enabled === true;
+
+                const start =
+                    String(
+                        day.start || ""
+                    );
+
+                const end =
+                    String(
+                        day.end || ""
+                    );
+
+                if (enabled) {
+
+                    if (
+                        !/^\d{2}:\d{2}$/.test(start) ||
+                        !/^\d{2}:\d{2}$/.test(end)
+                    ) {
+
+                        return res.status(400).json({
+
+                            success: false,
+
+                            error:
+                                "Érvénytelen időpont."
+
+                        });
+
+                    }
+
+                    const startMinutes =
+                        Number(start.substring(0, 2)) * 60 +
+                        Number(start.substring(3, 5));
+
+                    const endMinutes =
+                        Number(end.substring(0, 2)) * 60 +
+                        Number(end.substring(3, 5));
+
+                    if (
+                        startMinutes < 0 ||
+                        startMinutes > 1439 ||
+                        endMinutes < 0 ||
+                        endMinutes > 1439 ||
+                        startMinutes >= endMinutes
+                    ) {
+
+                        return res.status(400).json({
+
+                            success: false,
+
+                            error:
+                                "A kezdési időnek korábbinak kell lennie a befejezési időnél."
+
+                        });
+
+                    }
+
+                }
+
+                newSchedule[dayName] = {
+
+                    enabled,
+
+                    start,
+
+                    end
+
+                };
+
+            }
+
+            saveSchedule(
+                newSchedule
+            );
+
+            res.json({
+
+                success: true,
+
+                message:
+                    "Munkarend sikeresen mentve.",
+
+                schedule:
+                    newSchedule
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "SCHEDULE MENTÉSI HIBA:",
+                error
+            );
+
+            res.status(500).json({
+
+                success: false,
+
+                error:
+                    "Nem sikerült menteni a munkarendet."
+
+            });
+
+        }
+
+    }
+);
 
 
 // =====================================================
@@ -283,6 +658,11 @@ app.get(
 
         }
 
+        const allowedTimes =
+            getAvailableScheduleTimes(
+                date
+            );
+
         const bookings =
             getBookings();
 
@@ -297,11 +677,22 @@ app.get(
                         booking.time
                 );
 
+        const availableTimes =
+            allowedTimes.filter(
+                time =>
+                    !bookedTimes.includes(time)
+            );
+
         res.json({
 
             success: true,
 
-            bookedTimes
+            bookedTimes,
+
+            availableTimes,
+
+            dayWorking:
+                allowedTimes.length > 0
 
         });
 
@@ -330,10 +721,6 @@ app.post(
             } = req.body;
 
 
-            // -----------------------------------------
-            // KÖTELEZŐ MEZŐK
-            // -----------------------------------------
-
             if (
                 !name ||
                 !phone ||
@@ -355,14 +742,8 @@ app.post(
             }
 
 
-            // -----------------------------------------
-            // SZOLGÁLTATÁS ELLENŐRZÉSE
-            // -----------------------------------------
-
             if (
-                !SERVICES.includes(
-                    service
-                )
+                !SERVICES.includes(service)
             ) {
 
                 return res.status(400).json({
@@ -377,14 +758,14 @@ app.post(
             }
 
 
-            // -----------------------------------------
-            // IDŐPONT ELLENŐRZÉSE
-            // -----------------------------------------
+            const allowedTimes =
+                getAvailableScheduleTimes(
+                    date
+                );
+
 
             if (
-                !TIME_SLOTS.includes(
-                    time
-                )
+                !allowedTimes.includes(time)
             ) {
 
                 return res.status(400).json({
@@ -392,24 +773,16 @@ app.post(
                     success: false,
 
                     error:
-                        "Ez az időpont nem létezik."
+                        "Erre a napra ez az időpont nem foglalható."
 
                 });
 
             }
 
 
-            // -----------------------------------------
-            // FOGLALÁSOK
-            // -----------------------------------------
-
             const bookings =
                 getBookings();
 
-
-            // -----------------------------------------
-            // DUPLA FOGLALÁS ELLENŐRZÉSE
-            // -----------------------------------------
 
             const alreadyBooked =
                 bookings.some(
@@ -433,10 +806,6 @@ app.post(
             }
 
 
-            // -----------------------------------------
-            // ÚJ FOGLALÁS
-            // -----------------------------------------
-
             const booking = {
 
                 id:
@@ -451,14 +820,11 @@ app.post(
                 email:
                     email.trim(),
 
-                service:
-                    service,
+                service,
 
-                date:
-                    date,
+                date,
 
-                time:
-                    time,
+                time,
 
                 note:
                     note
@@ -471,10 +837,6 @@ app.post(
             };
 
 
-            // -----------------------------------------
-            // MENTÉS
-            // -----------------------------------------
-
             bookings.push(
                 booking
             );
@@ -484,16 +846,12 @@ app.post(
             );
 
 
-            // -----------------------------------------
-            // EMAIL
-            // -----------------------------------------
-
             const transporter =
                 createTransporter();
 
 
             // =================================================
-            // EMAIL A BARBERNEK
+            // BARBER EMAIL
             // =================================================
 
             try {
@@ -512,31 +870,27 @@ app.post(
                     html: `
 
                         <div style="
-                            font-family: Arial, sans-serif;
-                            max-width: 600px;
-                            margin: 30px auto;
-                            padding: 30px;
-                            background: #111;
-                            color: white;
-                            border-radius: 18px;
+                            font-family:Arial,sans-serif;
+                            max-width:600px;
+                            margin:30px auto;
+                            padding:30px;
+                            background:#111;
+                            color:white;
+                            border-radius:18px;
                         ">
 
-                            <h1 style="
-                                color: #d4af37;
-                            ">
+                            <h1 style="color:#d4af37;">
                                 CSIMPIKE CUTZ
                             </h1>
 
-                            <p style="
-                                color: #aaa;
-                            ">
+                            <p style="color:#aaa;">
                                 Új időpontfoglalás érkezett.
                             </p>
 
                             <hr style="
-                                border: none;
-                                border-top: 1px solid #333;
-                                margin: 25px 0;
+                                border:none;
+                                border-top:1px solid #333;
+                                margin:25px 0;
                             ">
 
                             <p>
@@ -556,11 +910,10 @@ app.post(
 
                             <p>
                                 <strong>Szolgáltatás:</strong><br>
-
                                 <span style="
-                                    color: #d4af37;
-                                    font-size: 20px;
-                                    font-weight: bold;
+                                    color:#d4af37;
+                                    font-size:20px;
+                                    font-weight:bold;
                                 ">
                                     ${escapeHtml(service)}
                                 </span>
@@ -573,11 +926,10 @@ app.post(
 
                             <p>
                                 <strong>Időpont:</strong><br>
-
                                 <span style="
-                                    color: #d4af37;
-                                    font-size: 25px;
-                                    font-weight: bold;
+                                    color:#d4af37;
+                                    font-size:25px;
+                                    font-weight:bold;
                                 ">
                                     ${escapeHtml(time)}
                                 </span>
@@ -592,14 +944,12 @@ app.post(
                             </p>
 
                             <hr style="
-                                border: none;
-                                border-top: 1px solid #333;
-                                margin: 25px 0;
+                                border:none;
+                                border-top:1px solid #333;
+                                margin:25px 0;
                             ">
 
-                            <p style="
-                                color: #999;
-                            ">
+                            <p style="color:#999;">
                                 Barber: Csimpike
                             </p>
 
@@ -609,7 +959,9 @@ app.post(
 
                 });
 
-            } catch (emailError) {
+            }
+
+            catch (emailError) {
 
                 console.error(
                     "BARBER EMAIL HIBA:",
@@ -620,7 +972,7 @@ app.post(
 
 
             // =================================================
-            // VISSZAIGAZOLÓ EMAIL A VENDÉGNEK
+            // VENDÉG EMAIL
             // =================================================
 
             try {
@@ -639,24 +991,23 @@ app.post(
                     html: `
 
                         <div style="
-                            font-family: Arial, sans-serif;
-                            max-width: 600px;
-                            margin: 30px auto;
-                            padding: 35px;
-                            background: #111;
-                            color: white;
-                            border-radius: 18px;
+                            font-family:Arial,sans-serif;
+                            max-width:600px;
+                            margin:30px auto;
+                            padding:35px;
+                            background:#111;
+                            color:white;
+                            border-radius:18px;
                         ">
 
                             <h1 style="
-                                color: #d4af37;
-                                font-size: 30px;
+                                color:#d4af37;
                             ">
                                 CSIMPIKE CUTZ
                             </h1>
 
                             <p style="
-                                color: #999;
+                                color:#999;
                             ">
                                 PREMIUM BARBER SHOP
                             </p>
@@ -666,32 +1017,31 @@ app.post(
                             </h2>
 
                             <p style="
-                                color: #ccc;
-                                line-height: 1.7;
+                                color:#ccc;
+                                line-height:1.7;
                             ">
                                 A foglalásodat sikeresen rögzítettük.
                                 Várunk szeretettel a CSIMPIKE CUTZ-ban!
                             </p>
 
                             <hr style="
-                                border: none;
-                                border-top: 1px solid #333;
-                                margin: 25px 0;
+                                border:none;
+                                border-top:1px solid #333;
+                                margin:25px 0;
                             ">
 
                             <div style="
-                                background: #181818;
-                                padding: 22px;
-                                border-radius: 12px;
+                                background:#181818;
+                                padding:22px;
+                                border-radius:12px;
                             ">
 
                                 <p>
                                     <strong>Szolgáltatás:</strong><br>
-
                                     <span style="
-                                        color: #d4af37;
-                                        font-size: 18px;
-                                        font-weight: bold;
+                                        color:#d4af37;
+                                        font-size:18px;
+                                        font-weight:bold;
                                     ">
                                         ${escapeHtml(service)}
                                     </span>
@@ -704,11 +1054,10 @@ app.post(
 
                                 <p>
                                     <strong>Időpont:</strong><br>
-
                                     <span style="
-                                        color: #d4af37;
-                                        font-size: 24px;
-                                        font-weight: bold;
+                                        color:#d4af37;
+                                        font-size:24px;
+                                        font-weight:bold;
                                     ">
                                         ${escapeHtml(time)}
                                     </span>
@@ -725,17 +1074,8 @@ app.post(
                             </div>
 
                             <p style="
-                                color: #999;
-                                margin-top: 30px;
-                                line-height: 1.6;
-                            ">
-                                Ha bármilyen kérdésed van,
-                                keress minket a megadott elérhetőségen.
-                            </p>
-
-                            <p style="
-                                color: #d4af37;
-                                font-weight: bold;
+                                color:#999;
+                                margin-top:30px;
                             ">
                                 CSIMPIKE CUTZ
                             </p>
@@ -746,7 +1086,9 @@ app.post(
 
                 });
 
-            } catch (customerEmailError) {
+            }
+
+            catch (customerEmailError) {
 
                 console.error(
                     "VENDÉG EMAIL HIBA:",
@@ -755,10 +1097,6 @@ app.post(
 
             }
 
-
-            // -----------------------------------------
-            // SIKERES VÁLASZ
-            // -----------------------------------------
 
             res.json({
 
@@ -805,7 +1143,6 @@ app.post(
             password
         } = req.body;
 
-
         if (
             !password ||
             password !==
@@ -824,10 +1161,6 @@ app.post(
         }
 
 
-        // -----------------------------------------
-        // ÚJ SESSION TOKEN
-        // -----------------------------------------
-
         const token =
             crypto
                 .randomBytes(32)
@@ -839,13 +1172,8 @@ app.post(
         );
 
 
-        // -----------------------------------------
-        // COOKIE
-        // -----------------------------------------
-
         res.setHeader(
             "Set-Cookie",
-
             [
                 `admin_token=${token}`,
                 "HttpOnly",
@@ -884,7 +1212,6 @@ app.post(
         const token =
             getAdminToken(req);
 
-
         if (token) {
 
             adminSessions.delete(
@@ -893,10 +1220,8 @@ app.post(
 
         }
 
-
         res.setHeader(
             "Set-Cookie",
-
             [
                 "admin_token=",
                 "HttpOnly",
@@ -905,7 +1230,6 @@ app.post(
                 "Max-Age=0"
             ].join("; ")
         );
-
 
         res.json({
 
@@ -929,7 +1253,6 @@ app.get(
         const bookings =
             getBookings();
 
-
         bookings.sort(
             (a, b) => {
 
@@ -946,7 +1269,6 @@ app.get(
             }
         );
 
-
         res.json({
 
             success: true,
@@ -961,7 +1283,6 @@ app.get(
 
 // =====================================================
 // FOGLALÁS TÖRLÉSE
-// + VENDÉG LEMONDÓ EMAIL
 // =====================================================
 
 app.delete(
@@ -975,7 +1296,6 @@ app.delete(
                 Number(
                     req.params.id
                 );
-
 
             if (
                 !Number.isFinite(id)
@@ -992,21 +1312,14 @@ app.delete(
 
             }
 
-
             const bookings =
                 getBookings();
-
-
-            // -----------------------------------------
-            // FOGLALÁS KERESÉSE
-            // -----------------------------------------
 
             const booking =
                 bookings.find(
                     item =>
                         Number(item.id) === id
                 );
-
 
             if (!booking) {
 
@@ -1021,10 +1334,6 @@ app.delete(
 
             }
 
-
-            // =================================================
-            // LEMONDÓ EMAIL A VENDÉGNEK
-            // =================================================
 
             const transporter =
                 createTransporter();
@@ -1046,67 +1355,53 @@ app.delete(
                     html: `
 
                         <div style="
-                            font-family: Arial, sans-serif;
-                            max-width: 600px;
-                            margin: 30px auto;
-                            padding: 35px;
-                            background: #111;
-                            color: white;
-                            border-radius: 18px;
+                            font-family:Arial,sans-serif;
+                            max-width:600px;
+                            margin:30px auto;
+                            padding:35px;
+                            background:#111;
+                            color:white;
+                            border-radius:18px;
                         ">
 
                             <h1 style="
-                                color: #d4af37;
-                                font-size: 30px;
-                                margin-bottom: 5px;
+                                color:#d4af37;
                             ">
                                 CSIMPIKE CUTZ
                             </h1>
 
                             <p style="
-                                color: #999;
-                                margin-bottom: 30px;
+                                color:#999;
                             ">
                                 PREMIUM BARBER SHOP
                             </p>
-
 
                             <h2>
                                 Szia ${escapeHtml(booking.name)}!
                             </h2>
 
-
                             <p style="
-                                color: #ccc;
-                                line-height: 1.7;
+                                color:#ccc;
+                                line-height:1.7;
                             ">
                                 Sajnáljuk, de az alábbi időpontodat
                                 sajnos nem tudjuk elvállalni.
                             </p>
 
-
                             <div style="
-                                background: #181818;
-                                padding: 22px;
-                                border-radius: 12px;
-                                margin-top: 25px;
+                                background:#181818;
+                                padding:22px;
+                                border-radius:12px;
+                                margin-top:25px;
                             ">
 
                                 <p>
                                     <strong>Szolgáltatás:</strong><br>
-
-                                    <span style="
-                                        color: #d4af37;
-                                        font-size: 18px;
-                                        font-weight: bold;
-                                    ">
-                                        ${escapeHtml(
-                                            booking.service ||
-                                            "Nincs megadva"
-                                        )}
-                                    </span>
+                                    ${escapeHtml(
+                                        booking.service ||
+                                        "Nincs megadva"
+                                    )}
                                 </p>
-
 
                                 <p>
                                     <strong>Dátum:</strong><br>
@@ -1115,14 +1410,12 @@ app.delete(
                                     )}
                                 </p>
 
-
                                 <p>
                                     <strong>Időpont:</strong><br>
-
                                     <span style="
-                                        color: #d4af37;
-                                        font-size: 24px;
-                                        font-weight: bold;
+                                        color:#d4af37;
+                                        font-size:24px;
+                                        font-weight:bold;
                                     ">
                                         ${escapeHtml(
                                             booking.time
@@ -1132,22 +1425,19 @@ app.delete(
 
                             </div>
 
-
                             <p style="
-                                color: #ccc;
-                                line-height: 1.7;
-                                margin-top: 30px;
+                                color:#ccc;
+                                line-height:1.7;
+                                margin-top:30px;
                             ">
                                 A foglalást töröltük.
-                                Kérjük, válassz egy másik szabad időpontot
-                                a CSIMPIKE CUTZ időpontfoglaló oldalán.
+                                Kérjük, válassz egy másik szabad időpontot.
                             </p>
 
-
                             <p style="
-                                color: #d4af37;
-                                font-weight: bold;
-                                margin-top: 30px;
+                                color:#d4af37;
+                                font-weight:bold;
+                                margin-top:30px;
                             ">
                                 CSIMPIKE CUTZ
                             </p>
@@ -1158,18 +1448,14 @@ app.delete(
 
                 });
 
-            } catch (emailError) {
+            }
+
+            catch (emailError) {
 
                 console.error(
                     "LEMONDÁSI EMAIL HIBA:",
                     emailError
                 );
-
-
-                // -----------------------------------------
-                // HA NEM MENT KI AZ EMAIL,
-                // NEM TÖRÖLJÜK A FOGLALÁST
-                // -----------------------------------------
 
                 return res.status(500).json({
 
@@ -1183,25 +1469,16 @@ app.delete(
             }
 
 
-            // =================================================
-            // FOGLALÁS TÖRLÉSE
-            // =================================================
-
             const updatedBookings =
                 bookings.filter(
                     item =>
                         Number(item.id) !== id
                 );
 
-
             saveBookings(
                 updatedBookings
             );
 
-
-            // =================================================
-            // SIKER
-            // =================================================
 
             res.json({
 
@@ -1217,10 +1494,9 @@ app.delete(
         catch (error) {
 
             console.error(
-                "FOGLALÁS TÖRLÉSI HIBA:",
+                "TÖRLÉSI HIBA:",
                 error
             );
-
 
             res.status(500).json({
 
@@ -1238,7 +1514,7 @@ app.delete(
 
 
 // =====================================================
-// ADMIN ÁLLAPOT ELLENŐRZÉS
+// ADMIN STATUS
 // =====================================================
 
 app.get(
@@ -1248,19 +1524,13 @@ app.get(
         const token =
             getAdminToken(req);
 
-
-        const loggedIn =
-            !!token &&
-            adminSessions.has(
-                token
-            );
-
-
         res.json({
 
             success: true,
 
-            loggedIn
+            loggedIn:
+                !!token &&
+                adminSessions.has(token)
 
         });
 
@@ -1269,7 +1539,7 @@ app.get(
 
 
 // =====================================================
-// SZERVER INDÍTÁSA
+// SZERVER
 // =====================================================
 
 app.listen(
@@ -1277,41 +1547,20 @@ app.listen(
     () => {
 
         console.log("");
-
-        console.log(
-            "========================================"
-        );
-
-        console.log(
-            "        CSIMPIKE CUTZ ONLINE"
-        );
-
-        console.log(
-            "========================================"
-        );
-
+        console.log("========================================");
+        console.log("        CSIMPIKE CUTZ ONLINE");
+        console.log("========================================");
         console.log("");
-
         console.log(
             `http://localhost:${PORT}`
         );
-
         console.log("");
-
-        console.log(
-            "Admin:"
-        );
-
+        console.log("Admin:");
         console.log(
             `http://localhost:${PORT}/admin.html`
         );
-
         console.log("");
-
-        console.log(
-            "Szerver elindult."
-        );
-
+        console.log("Szerver elindult.");
         console.log("");
 
     }
